@@ -35,6 +35,14 @@ export class PetSitterLogStack extends cdk.Stack {
     });
     table.grantWriteData(createEntry);
 
+    const listEntries = new NodejsFunction(this, 'ListEntriesFn', {
+      entry: 'lambda/list-entries.ts',
+      runtime: Runtime.NODEJS_20_X,
+      environment: { TABLE_NAME: table.tableName },
+      bundling: { externalModules: ['@aws-sdk/*'] },
+    });
+    table.grantReadData(listEntries);
+
     const api = new HttpApi(this, 'PetSitterApi');
     api.addRoutes({
       path: '/pets',
@@ -46,6 +54,12 @@ export class PetSitterLogStack extends cdk.Stack {
       path: '/pets/{id}/entries',
       methods: [HttpMethod.POST],
       integration: new HttpLambdaIntegration('CreateEntryIntegration', createEntry),
+    });
+
+    api.addRoutes({
+      path: '/pets/{id}/entries',
+      methods: [HttpMethod.GET],
+      integration: new HttpLambdaIntegration('ListEntriesIntegration', listEntries),
     });
 
     new cdk.CfnOutput(this, 'ApiUrl', { value: api.apiEndpoint });
