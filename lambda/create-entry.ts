@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb';
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
+import { json } from './http';
 
 // Entries live under the same partition as the pet's profile (PK = PET#<id>),
 // so one query later returns the profile and every entry together.
@@ -43,9 +44,3 @@ export const handler = async (
 
   return json(201, { petId, type: body.type, createdAt });
 };
-
-const json = (statusCode: number, payload: unknown): APIGatewayProxyResultV2 => ({
-  statusCode,
-  headers: { 'content-type': 'application/json' },
-  body: JSON.stringify(payload),
-});

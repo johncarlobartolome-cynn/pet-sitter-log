@@ -1,6 +1,7 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, QueryCommand } from '@aws-sdk/lib-dynamodb';
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
+import { json } from './http';
 
 const db = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const TABLE = process.env.TABLE_NAME!;
@@ -28,15 +29,13 @@ export const handler = async (
     return json(404, { error: 'no pet for this token' });
   }
 
-  const petId = String(profile.PK).replace('PET#', '');
-
   // Same query as list-entries: this pet's entries, newest first.
   const result = await db.send(
     new QueryCommand({
       TableName: TABLE,
       KeyConditionExpression: 'PK = :pk AND begins_with(SK, :entry)',
       ExpressionAttributeValues: {
-        ':pk': `PET#${petId}`,
+        ':pk': profile.PK,
         ':entry': 'ENTRY#',
       },
       ScanIndexForward: false,
@@ -59,9 +58,3 @@ export const handler = async (
     entries,
   });
 };
-
-const json = (statusCode: number, payload: unknown): APIGatewayProxyResultV2 => ({
-  statusCode,
-  headers: { 'content-type': 'application/json' },
-  body: JSON.stringify(payload),
-});

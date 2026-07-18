@@ -1,6 +1,7 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, QueryCommand } from '@aws-sdk/lib-dynamodb';
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
+import { json } from './http';
 
 const db = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const TABLE = process.env.TABLE_NAME!;
@@ -33,9 +34,3 @@ export const handler = async (
 
   return json(200, { entries });
 };
-
-const json = (statusCode: number, payload: unknown): APIGatewayProxyResultV2 => ({
-  statusCode,
-  headers: { 'content-type': 'application/json' },
-  body: JSON.stringify(payload),
-});
