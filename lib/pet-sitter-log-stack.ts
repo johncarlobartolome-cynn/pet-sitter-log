@@ -23,7 +23,7 @@ export class PetSitterLogStack extends cdk.Stack {
       entry: 'lambda/create-pet.ts',
       runtime: Runtime.NODEJS_20_X,
       environment: { TABLE_NAME: table.tableName },
-      bundling: { externalModules: [] }, // bundle the AWS SDK so the function is self-contained
+      bundling: { externalModules: ['@aws-sdk/*'] }, // bundle the AWS SDK so the function is self-contained
     });
     table.grantWriteData(createPet);
 
