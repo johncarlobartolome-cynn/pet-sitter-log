@@ -1,6 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import { AttributeType, BillingMode, Table } from 'aws-cdk-lib/aws-dynamodb';
+import { ProjectionType, AttributeType, BillingMode, Table } from 'aws-cdk-lib/aws-dynamodb';
 import { Runtime } from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { HttpApi, HttpMethod } from 'aws-cdk-lib/aws-apigatewayv2';
@@ -17,6 +17,14 @@ export class PetSitterLogStack extends cdk.Stack {
       sortKey: { name: 'SK', type: AttributeType.STRING },
       billingMode: BillingMode.PAY_PER_REQUEST,
       removalPolicy: cdk.RemovalPolicy.DESTROY, // demo data — deletes with the stack
+    });
+
+    table.addGlobalSecondaryIndex({
+      indexName: 'GSI1',
+      partitionKey: { name: 'shareToken', type: AttributeType.STRING },
+      projectionType: ProjectionType.INCLUDE,
+      // Profile fields the token view needs; PK/SK and shareToken are always indexed.
+      nonKeyAttributes: ['name', 'owner', 'careNotes', 'createdAt'],
     });
 
     const createPet = new NodejsFunction(this, 'CreatePetFn', {
