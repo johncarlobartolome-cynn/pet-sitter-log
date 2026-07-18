@@ -15,6 +15,9 @@ import {
 export class PetSitterLogStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
+    cdk.Tags.of(this).add('project', 'pet-sitter-log');
+    cdk.Tags.of(this).add('managed-by', 'cdk');
+
 
     // Single-table design: a pet's profile and its entries share one partition
     // key (PET#<id>), so listing a pet's data is a single query.
