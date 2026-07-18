@@ -107,8 +107,10 @@ export class PetSitterLogStack extends cdk.Stack {
           'token.actions.githubusercontent.com:aud': 'sts.amazonaws.com',
         },
         StringLike: {
+          // GitHub bakes immutable numeric IDs (owner + repo) into the OIDC
+          // subject; scope to those — they survive renames and are never reused.
           'token.actions.githubusercontent.com:sub':
-            'repo:johncarlobartolome-cynn/pet-sitter-log:*',
+            'repo:johncarlobartolome-cynn@211265861/pet-sitter-log@1305060455:*',
         },
       }),
     });
