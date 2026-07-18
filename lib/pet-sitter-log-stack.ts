@@ -51,6 +51,14 @@ export class PetSitterLogStack extends cdk.Stack {
     });
     table.grantReadData(listEntries);
 
+    const shareRead = new NodejsFunction(this, 'ShareReadFn', {
+      entry: 'lambda/share-read.ts',
+      runtime: Runtime.NODEJS_20_X,
+      environment: { TABLE_NAME: table.tableName },
+      bundling: { externalModules: ['@aws-sdk/*'] },
+    });
+    table.grantReadData(shareRead);
+
     const api = new HttpApi(this, 'PetSitterApi');
     api.addRoutes({
       path: '/pets',
@@ -68,6 +76,12 @@ export class PetSitterLogStack extends cdk.Stack {
       path: '/pets/{id}/entries',
       methods: [HttpMethod.GET],
       integration: new HttpLambdaIntegration('ListEntriesIntegration', listEntries),
+    });
+
+    api.addRoutes({
+      path: '/share/{token}',
+      methods: [HttpMethod.GET],
+      integration: new HttpLambdaIntegration('ShareReadIntegration', shareRead),
     });
 
     new cdk.CfnOutput(this, 'ApiUrl', { value: api.apiEndpoint });
