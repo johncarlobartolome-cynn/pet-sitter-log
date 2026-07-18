@@ -3,7 +3,7 @@ import { Construct } from 'constructs';
 import { ProjectionType, AttributeType, BillingMode, Table } from 'aws-cdk-lib/aws-dynamodb';
 import { Runtime } from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
-import { HttpApi, HttpMethod } from 'aws-cdk-lib/aws-apigatewayv2';
+import { CorsHttpMethod, HttpApi, HttpMethod } from 'aws-cdk-lib/aws-apigatewayv2';
 import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations';
 import {
   OpenIdConnectProvider,
@@ -68,7 +68,14 @@ export class PetSitterLogStack extends cdk.Stack {
     });
     table.grantReadData(shareRead);
 
-    const api = new HttpApi(this, 'PetSitterApi');
+    const api = new HttpApi(this, 'PetSitterApi', {
+      corsPreflight: {
+        allowOrigins: ['*'],
+        allowMethods: [CorsHttpMethod.GET, CorsHttpMethod.POST, CorsHttpMethod.OPTIONS],
+        allowHeaders: ['content-type'],
+      },
+    });
+
     api.addRoutes({
       path: '/pets',
       methods: [HttpMethod.POST],
