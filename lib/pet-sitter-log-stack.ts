@@ -5,6 +5,12 @@ import { Runtime } from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { HttpApi, HttpMethod } from 'aws-cdk-lib/aws-apigatewayv2';
 import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations';
+import {
+  OpenIdConnectProvider,
+  OpenIdConnectPrincipal,
+  Role,
+  PolicyStatement,
+} from 'aws-cdk-lib/aws-iam';
 
 export class PetSitterLogStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -84,6 +90,36 @@ export class PetSitterLogStack extends cdk.Stack {
       integration: new HttpLambdaIntegration('ShareReadIntegration', shareRead),
     });
 
+    // Let GitHub Actions deploy this stack with no stored AWS keys.
+    // AWS trusts GitHub's OIDC provider; the role can only be assumed by
+    // Actions runs from THIS repo.
+    const githubOidc = new OpenIdConnectProvider(this, 'GitHubOidc', {
+      url: 'https://token.actions.githubusercontent.com',
+      clientIds: ['sts.amazonaws.com'],
+    });
+
+    const deployRole = new Role(this, 'GitHubDeployRole', {
+      assumedBy: new OpenIdConnectPrincipal(githubOidc, {
+        StringEquals: {
+          'token.actions.githubusercontent.com:aud': 'sts.amazonaws.com',
+        },
+        StringLike: {
+          'token.actions.githubusercontent.com:sub':
+            'repo:johncarlobartolome-cynn/pet-sitter-log:*',
+        },
+      }),
+    });
+
+    // cdk deploy works by assuming the roles `cdk bootstrap` created,
+    // so this role just needs permission to assume those.
+    deployRole.addToPolicy(
+      new PolicyStatement({
+        actions: ['sts:AssumeRole'],
+        resources: [`arn:aws:iam::${this.account}:role/cdk-hnb659fds-*-${this.account}-${this.region}`],
+      }),
+    );
+
+    new cdk.CfnOutput(this, 'GitHubDeployRoleArn', { value: deployRole.roleArn });
     new cdk.CfnOutput(this, 'ApiUrl', { value: api.apiEndpoint });
   }
 }
