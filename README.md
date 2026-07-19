@@ -88,7 +88,7 @@ Base URL is the deployed HTTP API (CDK output `ApiUrl`).
 ## Tech stack
 
 - **Infrastructure as code:** AWS CDK v2 (TypeScript)
-- **Compute:** AWS Lambda (Node 20), bundled with esbuild via `NodejsFunction`; the AWS SDK v3 is left external (the Node 20 runtime ships it)
+- **Compute:** AWS Lambda (Node 22), bundled with esbuild via `NodejsFunction`; the AWS SDK v3 is left external (the Node 22 runtime ships it)
 - **Data:** DynamoDB (on-demand), single-table design + one sparse GSI
 - **API:** API Gateway HTTP API with CORS
 - **Web:** React + TypeScript (Vite), React Router
