@@ -5,7 +5,6 @@ A cloud-synced daily care log for pet sitters. A **sitter** logs walks, meals, m
 **Live:** https://d37myjzm3rtcz4.cloudfront.net
 **Stack:** AWS CDK · Lambda · API Gateway · DynamoDB · S3 + CloudFront · GitHub Actions (OIDC)
 
-<!-- Replace with the two-device demo capture -->
 ![Two-device sync demo](docs/demo.gif)
 
 ## What it does
