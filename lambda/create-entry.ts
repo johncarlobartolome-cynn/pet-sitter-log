@@ -23,8 +23,8 @@ export const handler = async (
     return json(400, { error: 'invalid JSON body' });
   }
 
-  if (!petId || typeof body.type !== 'string') {
-    return json(400, { error: 'petId and a string "type" are required' });
+  if (!petId || typeof body.type !== 'string' || body.type.trim() === '') {
+    return json(400, { error: 'petId and a non-empty "type" are required' });
   }
 
   const createdAt = new Date().toISOString();
