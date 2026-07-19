@@ -71,17 +71,19 @@ export class PetSitterLogStack extends cdk.Stack {
       distributionPaths: ['/*'],
     });
 
+    const nodeRuntime = Runtime.NODEJS_22_X;
+
     const createPet = new NodejsFunction(this, 'CreatePetFn', {
       entry: 'lambda/create-pet.ts',
-      runtime: Runtime.NODEJS_20_X,
+      runtime: nodeRuntime,
       environment: { TABLE_NAME: table.tableName },
-      bundling: { externalModules: ['@aws-sdk/*'] }, // Node 20 runtime already ships AWS SDK v3; no need to bundle it
+      bundling: { externalModules: ['@aws-sdk/*'] }, // Node 22 runtime already ships AWS SDK v3; no need to bundle it
     });
     table.grantWriteData(createPet);
 
     const createEntry = new NodejsFunction(this, 'CreateEntryFn', {
       entry: 'lambda/create-entry.ts',
-      runtime: Runtime.NODEJS_20_X,
+      runtime: nodeRuntime,
       environment: { TABLE_NAME: table.tableName },
       bundling: { externalModules: ['@aws-sdk/*'] },
     });
@@ -89,7 +91,7 @@ export class PetSitterLogStack extends cdk.Stack {
 
     const listEntries = new NodejsFunction(this, 'ListEntriesFn', {
       entry: 'lambda/list-entries.ts',
-      runtime: Runtime.NODEJS_20_X,
+      runtime: nodeRuntime,
       environment: { TABLE_NAME: table.tableName },
       bundling: { externalModules: ['@aws-sdk/*'] },
     });
@@ -97,7 +99,7 @@ export class PetSitterLogStack extends cdk.Stack {
 
     const shareRead = new NodejsFunction(this, 'ShareReadFn', {
       entry: 'lambda/share-read.ts',
-      runtime: Runtime.NODEJS_20_X,
+      runtime: nodeRuntime,
       environment: { TABLE_NAME: table.tableName },
       bundling: { externalModules: ['@aws-sdk/*'] },
     });
