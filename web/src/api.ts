@@ -19,12 +19,17 @@ export const createPet = (body: { name: string; owner?: string; careNotes?: stri
     body: JSON.stringify(body),
   }).then(json<Pet>);
 
-export const addEntry = (petId: string, body: { type: string; note?: string }) =>
+// Returns void: the backend responds with { petId, type, createdAt }, but the
+// caller discards it and re-fetches the list, so we don't model the body.
+export const addEntry = (
+  petId: string,
+  body: { type: string; note?: string },
+): Promise<void> =>
   fetch(`${API}/pets/${petId}/entries`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body),
-  }).then(json<Entry>);
+  }).then(json<void>);
 
 export const listEntries = (petId: string) =>
   fetch(`${API}/pets/${petId}/entries`).then(json<{ entries: Entry[] }>);
