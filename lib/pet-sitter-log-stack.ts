@@ -11,6 +11,10 @@ import {
   Role,
   PolicyStatement,
 } from 'aws-cdk-lib/aws-iam';
+import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
+import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
+import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
 
 export class PetSitterLogStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -34,6 +38,37 @@ export class PetSitterLogStack extends cdk.Stack {
       projectionType: ProjectionType.INCLUDE,
       // Profile fields the token view needs; PK/SK and shareToken are always indexed.
       nonKeyAttributes: ['name', 'owner', 'careNotes', 'createdAt'],
+    });
+
+    // Private bucket. Public access fully blocked — nobody hits S3 directly.
+    const siteBucket = new s3.Bucket(this, 'SiteBucket', {
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,   // demo: tears down clean
+      autoDeleteObjects: true,
+    });
+
+    const distribution = new cloudfront.Distribution(this, 'SiteDistribution', {
+      // withOriginAccessControl wires OAC + the bucket policy so ONLY this
+      // distribution can read the private bucket.
+      defaultBehavior: {
+        origin: origins.S3BucketOrigin.withOriginAccessControl(siteBucket),
+        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+      },
+      defaultRootObject: 'index.html',
+      // SPA deep links: a hard refresh on /share/<token> asks S3 for a key
+      // that doesn't exist → 403/404. Serve index.html so the router takes over.
+      errorResponses: [
+        { httpStatus: 403, responseHttpStatus: 200, responsePagePath: '/index.html' },
+        { httpStatus: 404, responseHttpStatus: 200, responsePagePath: '/index.html' },
+      ],
+    });
+    
+    // Upload the built SPA and bust the CDN cache on every deploy.
+    new s3deploy.BucketDeployment(this, 'DeploySite', {
+      sources: [s3deploy.Source.asset('web/dist')],
+      destinationBucket: siteBucket,
+      distribution,
+      distributionPaths: ['/*'],
     });
 
     const createPet = new NodejsFunction(this, 'CreatePetFn', {
@@ -133,5 +168,6 @@ export class PetSitterLogStack extends cdk.Stack {
 
     new cdk.CfnOutput(this, 'GitHubDeployRoleArn', { value: deployRole.roleArn });
     new cdk.CfnOutput(this, 'ApiUrl', { value: api.apiEndpoint });
+    new cdk.CfnOutput(this, 'SiteUrl', { value: `https://${distribution.distributionDomainName}` });
   }
 }
